@@ -1870,6 +1870,51 @@ spec:
                         auth:
                           description: 'Auth defines the information necessary to authenticate against AWS if not set aws sdk will infer credentials from your environment see: https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials'
                           properties:
+                            iamAnywhere:
+                              properties:
+                                certificateRef:
+                                  description: A reference to a specific 'key' within a Secret resource, In some instances, `key` is a required field.
+                                  properties:
+                                    key:
+                                      description: The key of the entry in the Secret resource's `data` field to be used. Some instances of this field may be defaulted, in others it may be required.
+                                      type: string
+                                    name:
+                                      description: The name of the Secret resource being referred to.
+                                      type: string
+                                    namespace:
+                                      description: Namespace of the resource being referred to. Ignored if referent is not cluster-scoped. cluster-scoped defaults to the namespace of the referent.
+                                      type: string
+                                  type: object
+                                endpoint:
+                                  type: string
+                                privateKeyRef:
+                                  description: A reference to a specific 'key' within a Secret resource, In some instances, `key` is a required field.
+                                  properties:
+                                    key:
+                                      description: The key of the entry in the Secret resource's `data` field to be used. Some instances of this field may be defaulted, in others it may be required.
+                                      type: string
+                                    name:
+                                      description: The name of the Secret resource being referred to.
+                                      type: string
+                                    namespace:
+                                      description: Namespace of the resource being referred to. Ignored if referent is not cluster-scoped. cluster-scoped defaults to the namespace of the referent.
+                                      type: string
+                                  type: object
+                                profileArn:
+                                  type: string
+                                region:
+                                  type: string
+                                roleArn:
+                                  type: string
+                                trustAnchorArn:
+                                  type: string
+                              required:
+                                - certificateRef
+                                - privateKeyRef
+                                - profileArn
+                                - roleArn
+                                - trustAnchorArn
+                              type: object
                             jwt:
                               description: Authenticate against AWS using service account tokens.
                               properties:
@@ -5327,6 +5372,51 @@ spec:
                         auth:
                           description: 'Auth defines the information necessary to authenticate against AWS if not set aws sdk will infer credentials from your environment see: https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials'
                           properties:
+                            iamAnywhere:
+                              properties:
+                                certificateRef:
+                                  description: A reference to a specific 'key' within a Secret resource, In some instances, `key` is a required field.
+                                  properties:
+                                    key:
+                                      description: The key of the entry in the Secret resource's `data` field to be used. Some instances of this field may be defaulted, in others it may be required.
+                                      type: string
+                                    name:
+                                      description: The name of the Secret resource being referred to.
+                                      type: string
+                                    namespace:
+                                      description: Namespace of the resource being referred to. Ignored if referent is not cluster-scoped. cluster-scoped defaults to the namespace of the referent.
+                                      type: string
+                                  type: object
+                                endpoint:
+                                  type: string
+                                privateKeyRef:
+                                  description: A reference to a specific 'key' within a Secret resource, In some instances, `key` is a required field.
+                                  properties:
+                                    key:
+                                      description: The key of the entry in the Secret resource's `data` field to be used. Some instances of this field may be defaulted, in others it may be required.
+                                      type: string
+                                    name:
+                                      description: The name of the Secret resource being referred to.
+                                      type: string
+                                    namespace:
+                                      description: Namespace of the resource being referred to. Ignored if referent is not cluster-scoped. cluster-scoped defaults to the namespace of the referent.
+                                      type: string
+                                  type: object
+                                profileArn:
+                                  type: string
+                                region:
+                                  type: string
+                                roleArn:
+                                  type: string
+                                trustAnchorArn:
+                                  type: string
+                              required:
+                                - certificateRef
+                                - privateKeyRef
+                                - profileArn
+                                - roleArn
+                                - trustAnchorArn
+                              type: object
                             jwt:
                               description: Authenticate against AWS using service account tokens.
                               properties:
