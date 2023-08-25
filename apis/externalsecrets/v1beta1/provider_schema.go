@@ -75,6 +75,13 @@ func GetProvider(s GenericStore) (Provider, error) {
 	if spec == nil {
 		return nil, fmt.Errorf("no spec found in %#v", s)
 	}
+	if spec.ProviderRef != nil {
+		f, ok := GetProviderByRef(*spec.ProviderRef)
+		if !ok {
+			return nil, fmt.Errorf("store error for %s: not registered", s.GetName())
+		}
+		return f, nil
+	}
 	storeName, err := getProviderName(spec.Provider)
 	if err != nil {
 		return nil, fmt.Errorf("store error for %s: %w", s.GetName(), err)

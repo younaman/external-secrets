@@ -17,6 +17,7 @@ package v1beta1
 import (
 	"context"
 
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -46,6 +47,8 @@ func (v ValidationResult) String() string {
 
 // Provider is a common interface for interacting with secret backends.
 type Provider interface {
+	// NewClient based on a provider spec
+	NewClientFromRef(ctx context.Context, ref esmeta.ProviderRef, kube client.Client, namespace string) (SecretsClient, error)
 	// NewClient constructs a SecretsManager Provider
 	NewClient(ctx context.Context, store GenericStore, kube client.Client, namespace string) (SecretsClient, error)
 

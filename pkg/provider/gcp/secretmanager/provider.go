@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,6 +53,10 @@ var useMu = sync.Mutex{}
 
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
+}
+
+func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // NewClient constructs a GCP Provider.

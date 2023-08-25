@@ -15,6 +15,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -27,8 +28,12 @@ type SecretStoreSpec struct {
 	Controller string `json:"controller"`
 
 	// Used to configure the provider. Only one provider may be set
-	Provider *SecretStoreProvider `json:"provider"`
+	// +optional
+	Provider *SecretStoreProvider `json:"provider,omitempty"`
 
+	// Used to reference a CRD-based provider. Only one of ProviderRef or provider may be set.
+	// providerRef takes precedence over provider.
+	ProviderRef *esmeta.ProviderRef `json:"providerRef,omitempty"`
 	// Used to configure http retries if failed
 	// +optional
 	RetrySettings *SecretStoreRetrySettings `json:"retrySettings,omitempty"`

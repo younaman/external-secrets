@@ -3281,6 +3281,17 @@ spec:
                         - auth
                       type: object
                   type: object
+                providerRef:
+                  description: Used to reference a CRD-based provider. Only one of ProviderRef or provider may be set. providerRef takes precedence over provider.
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                    - kind
+                    - name
+                  type: object
                 refreshInterval:
                   description: Used to configure store refresh interval in seconds. Empty or 0 will default to the controller config.
                   type: integer
@@ -3293,8 +3304,6 @@ spec:
                     retryInterval:
                       type: string
                   type: object
-              required:
-                - provider
               type: object
             status:
               description: SecretStoreStatus defines the observed state of the SecretStore.
@@ -7011,6 +7020,17 @@ spec:
                         - auth
                       type: object
                   type: object
+                providerRef:
+                  description: Used to reference a CRD-based provider. Only one of ProviderRef or provider may be set. providerRef takes precedence over provider.
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                    - kind
+                    - name
+                  type: object
                 refreshInterval:
                   description: Used to configure store refresh interval in seconds. Empty or 0 will default to the controller config.
                   type: integer
@@ -7023,8 +7043,6 @@ spec:
                     retryInterval:
                       type: string
                   type: object
-              required:
-                - provider
               type: object
             status:
               description: SecretStoreStatus defines the observed state of the SecretStore.
@@ -8068,7 +8086,7 @@ spec:
             spec:
               description: FakeSpec contains the static data.
               properties:
-                controller:
+                data:
                   items:
                     properties:
                       key:
@@ -8086,7 +8104,7 @@ spec:
                     type: object
                   type: array
               required:
-                - controller
+                - data
               type: object
           type: object
       served: true

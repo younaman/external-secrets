@@ -14,6 +14,11 @@ limitations under the License.
 
 package v1
 
+type ProviderRef struct {
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+}
+
 // A reference to a specific 'key' within a Secret resource,
 // In some instances, `key` is a required field.
 type SecretKeySelector struct {

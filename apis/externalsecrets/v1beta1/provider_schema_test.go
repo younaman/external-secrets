@@ -15,8 +15,10 @@ package v1beta1
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -27,6 +29,10 @@ const shouldBeRegistered = "provider should be registered"
 
 func (p *PP) Capabilities() SecretStoreCapabilities {
 	return SecretStoreReadOnly
+}
+
+func (p *PP) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // New constructs a SecretsManager Provider.

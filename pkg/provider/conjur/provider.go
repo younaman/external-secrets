@@ -51,6 +51,10 @@ type Client interface {
 	RetrieveSecret(secret string) (result []byte, err error)
 }
 
+func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 // NewClient creates a new Conjur client.
 func (p *Provider) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube client.Client, namespace string) (esv1beta1.SecretsClient, error) {
 	prov, err := util.GetConjurProvider(store)

@@ -12,25 +12,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta1
 
 import (
 	"fmt"
 	"sync"
 
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var builder map[string]Provider
-var buildlock sync.RWMutex
+var refBuilder map[string]Provider
+var refbuildlock sync.RWMutex
 
 func init() {
-	builder = make(map[string]Provider)
+	refBuilder = make(map[string]Provider)
 }
 
 // Register a store backend type. Register panics if a
 // backend with the same store is already registered.
-func Register(s Provider, storeType string) {
+func RefRegister(s Provider, storeType string) {
 	buildlock.Lock()
 	defer buildlock.Unlock()
 	_, exists := builder[storeType]
@@ -43,22 +44,22 @@ func Register(s Provider, storeType string) {
 
 // ForceRegister adds to store schema, overwriting a store if
 // already registered. Should only be used for testing.
-func ForceRegister(s Provider, storeType string) {
+func RefForceRegister(s Provider, storeType string) {
 	buildlock.Lock()
 	builder[storeType] = s
 	buildlock.Unlock()
 }
 
 // GetProviderByName returns the provider implementation by name.
-func GetProviderByName(name string) (Provider, bool) {
+func GetProviderByRef(ref esmeta.ProviderRef) (Provider, bool) {
 	buildlock.RLock()
-	f, ok := builder[name]
+	f, ok := builder[ref.Kind]
 	buildlock.RUnlock()
 	return f, ok
 }
 
 // GetProvider returns the provider from the generic store.
-func GetProvider(r runtime.Object) (Provider, error) {
+func GetProviderByObj(r runtime.Object) (Provider, error) {
 	if r == nil {
 		return nil, nil
 	}

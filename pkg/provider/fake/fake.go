@@ -18,10 +18,11 @@ import (
 	"context"
 	"fmt"
 
+	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
+	prov "github.com/external-secrets/external-secrets/apis/providers/v1alpha1"
 	"github.com/tidwall/gjson"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 )
 
 var (
@@ -54,7 +55,41 @@ type Provider struct {
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
 }
+func (p *Provider) NewClientFromRef(ctx context.Context, ref esmeta.ProviderRef, kube client.Client, ns string) (esv1beta1.SecretsClient, error) {
+	if p.database == nil {
+		p.database = make(map[string]Config)
+	}
+	f := prov.Fake{}
+	err := kube.Get(ctx, client.ObjectKey{Name: ref.Name, Namespace: ns}, &f)
+	if err != nil {
+		return nil, fmt.Errorf("could not open provider CRD for %v: %w", ref.Name, err)
+	}
+	cfg := p.database[f.GetName()]
+	if cfg == nil {
+		cfg = Config{}
+	}
+	for key, data := range cfg {
+		if data.Origin == FakeSecretStore {
+			delete(cfg, key)
+		}
+	}
+	for _, data := range f.Spec.Data {
+		mapKey := fmt.Sprintf("%v%v", data.Key, data.Version)
+		cfg[mapKey] = &Data{
+			Value:   data.Value,
+			Version: data.Version,
+			Origin:  FakeSecretStore,
+		}
+		if data.ValueMap != nil {
+			cfg[mapKey].ValueMap = data.ValueMap
+		}
+	}
+	p.database[f.GetName()] = cfg
+	return &Provider{
+		config: cfg,
+	}, nil
 
+}
 func (p *Provider) NewClient(_ context.Context, store esv1beta1.GenericStore, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	if p.database == nil {
 		p.database = make(map[string]Config)
@@ -194,4 +229,5 @@ func init() {
 	esv1beta1.Register(&Provider{}, &esv1beta1.SecretStoreProvider{
 		Fake: &esv1beta1.FakeProvider{},
 	})
+	esv1beta1.RefRegister(&Provider{}, "Fake")
 }

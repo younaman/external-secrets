@@ -107,6 +107,9 @@ type SecretsClientInput struct {
 func (p *YandexCloudProvider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
+func (p *YandexCloudProvider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
+}
 
 // NewClient constructs a Yandex.Cloud Provider.
 func (p *YandexCloudProvider) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (esv1beta1.SecretsClient, error) {

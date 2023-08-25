@@ -20,7 +20,7 @@ import (
 
 // FakeSpec contains the static data.
 type FakeSpec struct {
-	Data []FakeProviderData `json:"controller"`
+	Data []FakeProviderData `json:"data"`
 }
 
 type FakeProviderData struct {
@@ -48,4 +48,8 @@ type FakeList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Fake `json:"items"`
+}
+
+func init() {
+
 }

@@ -74,7 +74,14 @@ func NewManager(ctrlClient client.Client, controllerClass string, enableFloodgat
 }
 
 func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore, namespace string) (esv1beta1.SecretsClient, error) {
-	storeProvider, err := esv1beta1.GetProvider(store)
+	var storeProvider esv1beta1.Provider
+	var err error
+	if store.GetSpec().ProviderRef != nil {
+		storeProvider, _ = esv1beta1.GetProviderByRef(*store.GetSpec().ProviderRef)
+
+	} else {
+		storeProvider, err = esv1beta1.GetProvider(store)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +94,16 @@ func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore
 		"store", fmt.Sprintf("%s/%s", store.GetNamespace(), store.GetName()))
 	// secret client is created only if we are going to refresh
 	// this skip an unnecessary check/request in the case we are not going to do anything
-	secretClient, err = storeProvider.NewClient(ctx, store, m.client, namespace)
-	if err != nil {
-		return nil, err
+	if store.GetSpec().ProviderRef != nil {
+		secretClient, err = storeProvider.NewClientFromRef(ctx, *store.GetSpec().ProviderRef, m.client, namespace)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		secretClient, err = storeProvider.NewClient(ctx, store, m.client, namespace)
+		if err != nil {
+			return nil, err
+		}
 	}
 	idx := storeKey(storeProvider)
 	m.clientMap[idx] = &clientVal{

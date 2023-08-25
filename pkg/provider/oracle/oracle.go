@@ -147,6 +147,10 @@ func (vms *VaultManagementService) Capabilities() esv1beta1.SecretStoreCapabilit
 	return esv1beta1.SecretStoreReadOnly
 }
 
+func (p *VaultManagementService) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 // NewClient constructs a new secrets client based on the provided store.
 func (vms *VaultManagementService) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (esv1beta1.SecretsClient, error) {
 	storeSpec := store.GetSpec()

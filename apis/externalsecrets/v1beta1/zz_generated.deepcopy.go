@@ -1971,6 +1971,11 @@ func (in *SecretStoreSpec) DeepCopyInto(out *SecretStoreSpec) {
 		*out = new(SecretStoreProvider)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ProviderRef != nil {
+		in, out := &in.ProviderRef, &out.ProviderRef
+		*out = new(metav1.ProviderRef)
+		**out = **in
+	}
 	if in.RetrySettings != nil {
 		in, out := &in.RetrySettings, &out.RetrySettings
 		*out = new(SecretStoreRetrySettings)

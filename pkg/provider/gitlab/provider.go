@@ -21,6 +21,8 @@ import (
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
+
 	"github.com/external-secrets/external-secrets/pkg/utils"
 )
 
@@ -42,6 +44,10 @@ type gitlabBase struct {
 // Capabilities return the provider supported capabilities (ReadOnly, WriteOnly, ReadWrite).
 func (g *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
+}
+
+func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 // Method on GitLab Provider to set up projectVariablesClient with credentials, populate projectID and environment.
