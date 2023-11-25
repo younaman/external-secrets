@@ -20,6 +20,7 @@ import (
 
 	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,12 +42,12 @@ func (p *PP) NewClient(_ context.Context, _ GenericStore, _ client.Client, _ str
 }
 
 // PushSecret writes a single secret into a provider.
-func (p *PP) PushSecret(_ context.Context, _ []byte, _ PushRemoteRef) error {
+func (p *PP) PushSecret(_ context.Context, _ *corev1.Secret, _ PushSecretData) error {
 	return nil
 }
 
 // DeleteSecret deletes a single secret from a provider.
-func (p *PP) DeleteSecret(_ context.Context, _ PushRemoteRef) error {
+func (p *PP) DeleteSecret(_ context.Context, _ PushSecretRemoteRef) error {
 	return nil
 }
 
