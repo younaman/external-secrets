@@ -51,5 +51,4 @@ type FakeList struct {
 }
 
 func init() {
-
 }

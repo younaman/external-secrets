@@ -61,12 +61,12 @@ type Provider struct {
 	NewConjurProvider func(context context.Context, store esv1beta1.GenericStore, kube client.Client, namespace string, corev1 typedcorev1.CoreV1Interface, clientApi SecretsClientFactory) (esv1beta1.SecretsClient, error)
 }
 
-func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (p *Provider) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
 // NewClient creates a new Conjur client.
-func (c *Provider) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube client.Client, namespace string) (esv1beta1.SecretsClient, error) {
+func (p *Provider) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube client.Client, namespace string) (esv1beta1.SecretsClient, error) {
 	// controller-runtime/client does not support TokenRequest or other subresource APIs
 	// so we need to construct our own client and use it to create a TokenRequest
 	restCfg, err := ctrlcfg.GetConfig()
@@ -78,7 +78,7 @@ func (c *Provider) NewClient(ctx context.Context, store esv1beta1.GenericStore, 
 		return nil, err
 	}
 
-	return c.NewConjurProvider(ctx, store, kube, namespace, clientset.CoreV1(), &ClientAPIImpl{})
+	return p.NewConjurProvider(ctx, store, kube, namespace, clientset.CoreV1(), &ClientAPIImpl{})
 }
 
 func newConjurProvider(_ context.Context, store esv1beta1.GenericStore, kube client.Client, namespace string, corev1 typedcorev1.CoreV1Interface, clientAPI SecretsClientFactory) (esv1beta1.SecretsClient, error) {
@@ -219,7 +219,7 @@ func (p *Client) Validate() (esv1beta1.ValidationResult, error) {
 }
 
 // ValidateStore validates the store.
-func (c *Provider) ValidateStore(store esv1beta1.GenericStore) error {
+func (p *Provider) ValidateStore(store esv1beta1.GenericStore) error {
 	prov, err := util.GetConjurProvider(store)
 	if err != nil {
 		return err
@@ -277,7 +277,7 @@ func (c *Provider) ValidateStore(store esv1beta1.GenericStore) error {
 }
 
 // Capabilities returns the provider Capabilities (Read, Write, ReadWrite).
-func (c *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
+func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
 

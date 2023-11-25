@@ -15,9 +15,10 @@ limitations under the License.
 package v1beta1
 
 import (
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 // SecretStoreSpec defines the desired state of SecretStore.

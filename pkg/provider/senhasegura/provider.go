@@ -22,8 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
-
 	senhaseguraAuth "github.com/external-secrets/external-secrets/pkg/provider/senhasegura/auth"
 	"github.com/external-secrets/external-secrets/pkg/provider/senhasegura/dsm"
 )
@@ -50,7 +48,7 @@ func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
 
-func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (p *Provider) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

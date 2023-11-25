@@ -20,7 +20,6 @@ import (
 	"os"
 	"strconv"
 
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
@@ -51,7 +50,7 @@ func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
 
-func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (p *Provider) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

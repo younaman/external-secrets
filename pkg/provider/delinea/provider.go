@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/DelineaXPM/dsv-sdk-go/v2/vault"
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -201,7 +200,7 @@ func (p *Provider) ValidateStore(store esv1beta1.GenericStore) error {
 	return err
 }
 
-func (p *Provider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kubeClient.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (p *Provider) NewClientFromObj(_ context.Context, _ kubeClient.Object, _ kubeClient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,7 +31,7 @@ func (p *PP) Capabilities() SecretStoreCapabilities {
 	return SecretStoreReadOnly
 }
 
-func (p *PP) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (SecretsClient, error) {
+func (p *PP) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

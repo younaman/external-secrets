@@ -31,7 +31,6 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 func TestManagerGet(t *testing.T) {
@@ -319,7 +318,7 @@ type WrapProvider struct {
 		string) (esv1beta1.SecretsClient, error)
 }
 
-func (p *WrapProvider) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (f *WrapProvider) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

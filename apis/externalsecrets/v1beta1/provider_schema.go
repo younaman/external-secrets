@@ -18,6 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 var builder map[string]Provider
@@ -45,6 +47,17 @@ func Register(s Provider, storeSpec *SecretStoreProvider) {
 	builder[storeName] = s
 }
 
+func RegisterByName(s Provider, name string) {
+	buildlock.Lock()
+	defer buildlock.Unlock()
+	_, exists := builder[name]
+	if exists {
+		panic(fmt.Sprintf("store %q already registered", name))
+	}
+
+	builder[name] = s
+}
+
 // ForceRegister adds to store schema, overwriting a store if
 // already registered. Should only be used for testing.
 func ForceRegister(s Provider, storeSpec *SecretStoreProvider) {
@@ -66,6 +79,17 @@ func GetProviderByName(name string) (Provider, bool) {
 	return f, ok
 }
 
+// GetProviderByRef returns the provider by its kind.
+func GetProviderByRef(ref esmeta.ProviderRef) (Provider, error) {
+	buildlock.RLock()
+	f, ok := builder[ref.Kind]
+	buildlock.RUnlock()
+	if !ok {
+		return nil, fmt.Errorf("provider %v not found", ref.Kind)
+	}
+	return f, nil
+}
+
 // GetProvider returns the provider from the generic store.
 func GetProvider(s GenericStore) (Provider, error) {
 	if s == nil {
@@ -74,13 +98,6 @@ func GetProvider(s GenericStore) (Provider, error) {
 	spec := s.GetSpec()
 	if spec == nil {
 		return nil, fmt.Errorf("no spec found in %#v", s)
-	}
-	if spec.ProviderRef != nil {
-		f, ok := GetProviderByRef(*spec.ProviderRef)
-		if !ok {
-			return nil, fmt.Errorf("store error for %s: not registered", s.GetName())
-		}
-		return f, nil
 	}
 	storeName, err := getProviderName(spec.Provider)
 	if err != nil {

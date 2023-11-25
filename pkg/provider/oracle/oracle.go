@@ -244,7 +244,7 @@ func (vms *VaultManagementService) Capabilities() esv1beta1.SecretStoreCapabilit
 	return esv1beta1.SecretStoreReadOnly
 }
 
-func (p *VaultManagementService) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (vms *VaultManagementService) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

@@ -208,7 +208,7 @@ type Connector struct {
 func (c *Connector) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
 }
-func (c *Connector) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (c *Connector) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 func (c *Connector) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (esv1beta1.SecretsClient, error) {

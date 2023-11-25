@@ -23,7 +23,6 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	sm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
-	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 	corev1 "k8s.io/api/core/v1"
@@ -638,7 +637,7 @@ func (ibm *providerIBM) ValidateStore(store esv1beta1.GenericStore) error {
 func (ibm *providerIBM) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
-func (p *providerIBM) NewClientFromRef(_ context.Context, _ esmeta.ProviderRef, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (ibm *providerIBM) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

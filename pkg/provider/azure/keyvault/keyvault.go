@@ -128,7 +128,7 @@ func (a *Azure) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
 }
 
-func (p *Azure) NewClientFromRef(_ context.Context, _ smmeta.ProviderRef, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
+func (a *Azure) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

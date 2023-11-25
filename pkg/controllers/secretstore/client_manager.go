@@ -17,6 +17,7 @@ package secretstore
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -28,6 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmetav1 "github.com/external-secrets/external-secrets/apis/meta/v1"
+	prov "github.com/external-secrets/external-secrets/apis/providers/v1alpha1"
 )
 
 const (
@@ -73,12 +76,25 @@ func NewManager(ctrlClient client.Client, controllerClass string, enableFloodgat
 	}
 }
 
+func (m *Manager) getProviderSpec(ctx context.Context, ref *esmetav1.ProviderRef, namespace string) (client.Object, error) {
+	p, err := prov.GetManifestByKind(ref.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("could not get a provider for kind %v", ref.Kind)
+	}
+	spec := reflect.New(reflect.ValueOf(p).Elem().Type()).Interface().(client.Object) // New Copy
+	key := types.NamespacedName{Namespace: namespace, Name: ref.Name}
+	err = m.client.Get(ctx, key, spec)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Provider %v: %w", ref.Name, err)
+	}
+	return spec, nil
+}
+
 func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore, namespace string) (esv1beta1.SecretsClient, error) {
 	var storeProvider esv1beta1.Provider
 	var err error
 	if store.GetSpec().ProviderRef != nil {
 		storeProvider, _ = esv1beta1.GetProviderByRef(*store.GetSpec().ProviderRef)
-
 	} else {
 		storeProvider, err = esv1beta1.GetProvider(store)
 	}
@@ -95,7 +111,12 @@ func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore
 	// secret client is created only if we are going to refresh
 	// this skip an unnecessary check/request in the case we are not going to do anything
 	if store.GetSpec().ProviderRef != nil {
-		secretClient, err = storeProvider.NewClientFromRef(ctx, *store.GetSpec().ProviderRef, m.client, namespace)
+		spec, err := m.getProviderSpec(ctx, store.GetSpec().ProviderRef, namespace)
+		if err != nil {
+			return nil, err
+		}
+		// TODO FIX THIS CODE
+		secretClient, err = storeProvider.NewClientFromObj(ctx, spec, m.client, namespace)
 		if err != nil {
 			return nil, err
 		}
