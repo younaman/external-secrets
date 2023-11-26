@@ -16,6 +16,7 @@ package fake
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -59,8 +60,20 @@ type Provider struct {
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
 }
-func (p *Provider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
-	return nil, nil
+func (p *Provider) Convert(in esv1beta1.GenericStore) (client.Object, error) {
+	out := &prov.Fake{}
+	tmp := map[string]interface{}{
+		"spec": in.GetSpec().Provider.Fake,
+	}
+	d, err := json.Marshal(tmp)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(d, out)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert %v in a valid fake provider: %w", in.GetName(), err)
+	}
+	return out, nil
 }
 
 func (p *Provider) NewClientFromObj(_ context.Context, obj client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
