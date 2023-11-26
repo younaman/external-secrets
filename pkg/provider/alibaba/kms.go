@@ -30,6 +30,7 @@ import (
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/external-secrets/external-secrets/pkg/utils"
 )
 
@@ -135,6 +136,10 @@ func (kms *KeyManagementService) Convert(_ esv1beta1.GenericStore) (kclient.Obje
 }
 func (kms *KeyManagementService) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (kms *KeyManagementService) ApplyReferent(spec kclient.Object, _ esmeta.ReferentCallOrigin, _ string) (kclient.Object, error) {
+	return spec, nil
 }
 
 // NewClient constructs a new secrets client based on the provided store.

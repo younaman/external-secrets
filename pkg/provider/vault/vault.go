@@ -213,6 +213,10 @@ func (c *Connector) Convert(_ esv1beta1.GenericStore) (kclient.Object, error) {
 	return nil, nil
 }
 
+func (c *Connector) ApplyReferent(spec kclient.Object, _ esmeta.ReferentCallOrigin, _ string) (kclient.Object, error) {
+	return spec, nil
+}
+
 func (c *Connector) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }

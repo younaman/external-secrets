@@ -19,6 +19,17 @@ type ProviderRef struct {
 	Name string `json:"name"`
 }
 
+// ReferentCallOrigin determines if NewClientFromObject was called from the Provider, The SecretStore, or the ClusterSecretStore.
+type ReferentCallOrigin string
+
+const (
+	ReferentCallSecretStore ReferentCallOrigin = "SecretStore"
+
+	ReferentCallClusterSecretStore ReferentCallOrigin = "ClusterSecretStore"
+
+	ReferentCallProvider ReferentCallOrigin = "Provider"
+)
+
 // A reference to a specific 'key' within a Secret resource,
 // In some instances, `key` is a required field.
 type SecretKeySelector struct {

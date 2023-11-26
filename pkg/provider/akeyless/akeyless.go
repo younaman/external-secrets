@@ -89,6 +89,11 @@ func (p *Provider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
+
+func (p *Provider) ApplyReferent(spec client.Object, _ esmeta.ReferentCallOrigin, _ string) (client.Object, error) {
+	return spec, nil
+}
+
 func (p *Provider) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }

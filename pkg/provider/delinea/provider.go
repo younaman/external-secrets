@@ -24,6 +24,7 @@ import (
 	kubeClient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	"github.com/external-secrets/external-secrets/pkg/utils"
 )
 
@@ -198,6 +199,10 @@ func getConfig(store esv1beta1.GenericStore) (*esv1beta1.DelineaProvider, error)
 func (p *Provider) ValidateStore(store esv1beta1.GenericStore) error {
 	_, err := getConfig(store)
 	return err
+}
+
+func (p *Provider) ApplyReferent(spec kubeClient.Object, _ esmeta.ReferentCallOrigin, _ string) (kubeClient.Object, error) {
+	return spec, nil
 }
 
 func (p *Provider) NewClientFromObj(_ context.Context, _ kubeClient.Object, _ kubeClient.Client, _ string) (esv1beta1.SecretsClient, error) {

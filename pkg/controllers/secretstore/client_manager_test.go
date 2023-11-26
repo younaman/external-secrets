@@ -31,6 +31,7 @@ import (
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 func TestManagerGet(t *testing.T) {
@@ -322,6 +323,9 @@ func (f *WrapProvider) NewClientFromObj(_ context.Context, _ client.Object, _ cl
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (f *WrapProvider) ApplyReferent(spec client.Object, _ esmeta.ReferentCallOrigin, _ string) (client.Object, error) {
+	return spec, nil
+}
 func (f *WrapProvider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
 	return nil, nil
 }

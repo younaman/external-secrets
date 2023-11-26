@@ -21,6 +21,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 type PP struct{}
@@ -34,6 +36,9 @@ func (p *PP) Capabilities() SecretStoreCapabilities {
 	return SecretStoreReadOnly
 }
 
+func (p *PP) ApplyReferent(spec client.Object, _ esmeta.ReferentCallOrigin, _ string) (client.Object, error) {
+	return spec, nil
+}
 func (p *PP) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }

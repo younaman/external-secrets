@@ -28,6 +28,7 @@ import (
 	ctrlcfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 )
 
 // https://github.com/external-secrets/external-secrets/issues/644
@@ -91,6 +92,10 @@ func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 }
 func (p *Provider) Convert(_ esv1beta1.GenericStore) (kclient.Object, error) {
 	return nil, nil
+}
+
+func (p *Provider) ApplyReferent(spec kclient.Object, _ esmeta.ReferentCallOrigin, _ string) (kclient.Object, error) {
+	return spec, nil
 }
 
 func (p *Provider) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {

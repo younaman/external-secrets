@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
+	esmeta "github.com/external-secrets/external-secrets/apis/meta/v1"
 	awsauth "github.com/external-secrets/external-secrets/pkg/provider/aws/auth"
 	"github.com/external-secrets/external-secrets/pkg/provider/aws/parameterstore"
 	"github.com/external-secrets/external-secrets/pkg/provider/aws/secretsmanager"
@@ -56,6 +57,10 @@ func (p *Provider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
 // Capabilities return the provider supported capabilities (ReadOnly, WriteOnly, ReadWrite).
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
+}
+
+func (p *Provider) ApplyReferent(spec client.Object, _ esmeta.ReferentCallOrigin, _ string) (client.Object, error) {
+	return spec, nil
 }
 func (p *Provider) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
