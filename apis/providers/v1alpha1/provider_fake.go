@@ -33,7 +33,7 @@ type FakeProviderData struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Namespaced,categories={fake},shortName=fake
+// +kubebuilder:resource:scope=Cluster,categories={fake},shortName=fake
 type Fake struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

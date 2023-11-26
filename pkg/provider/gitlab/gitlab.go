@@ -84,15 +84,13 @@ func (g *gitlabBase) getAuth(ctx context.Context) ([]byte, error) {
 	if credentialsSecretName == "" {
 		return nil, fmt.Errorf(errGitlabCredSecretName)
 	}
+
 	objectKey := types.NamespacedName{
 		Name:      credentialsSecretName,
 		Namespace: g.namespace,
 	}
-	// only ClusterStore is allowed to set namespace (and then it's required)
-	if g.storeKind == esv1beta1.ClusterSecretStoreKind {
-		if g.store.Auth.SecretRef.AccessToken.Namespace == nil {
-			return nil, fmt.Errorf(errInvalidClusterStoreMissingSAKNamespace)
-		}
+	// If namespace is set, it means we must use it (non-referrent call either from local SecretStore or defined ClusterSecretStore)
+	if g.store.Auth.SecretRef.AccessToken.Namespace != nil {
 		objectKey.Namespace = *g.store.Auth.SecretRef.AccessToken.Namespace
 	}
 

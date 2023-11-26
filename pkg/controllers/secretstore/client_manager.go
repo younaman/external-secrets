@@ -82,7 +82,7 @@ func (m *Manager) getProviderSpec(ctx context.Context, ref *esmetav1.ProviderRef
 		return nil, fmt.Errorf("could not get a provider for kind %v", ref.Kind)
 	}
 	spec := reflect.New(reflect.ValueOf(p).Elem().Type()).Interface().(client.Object) // New Copy
-	key := types.NamespacedName{Namespace: namespace, Name: ref.Name}
+	key := types.NamespacedName{Name: ref.Name}
 	err = m.client.Get(ctx, key, spec)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Provider %v: %w", ref.Name, err)

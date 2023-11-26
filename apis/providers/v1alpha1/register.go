@@ -44,6 +44,15 @@ var (
 	FakeGroupVersionKind = SchemeGroupVersion.WithKind(FakeKind)
 )
 
+// Gitlab type metadata.
+var (
+	GitlabKind             = reflect.TypeOf(Gitlab{}).Name()
+	GitlabGroupKind        = schema.GroupKind{Group: Group, Kind: GitlabKind}.String()
+	GitlabKindAPIVersion   = GitlabKind + "." + SchemeGroupVersion.String()
+	GitlabGroupVersionKind = SchemeGroupVersion.WithKind(GitlabKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&Fake{}, &FakeList{})
+	SchemeBuilder.Register(&Gitlab{}, &GitlabList{})
 }
