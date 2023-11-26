@@ -134,7 +134,16 @@ func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore
 		}
 		return secretClient, nil
 	}
-	secretClient, err = storeProvider.NewClientFromObj(ctx, spec, m.client, namespace)
+	caller := esmetav1.ReferentCallSecretStore
+	storeKind := store.GetObjectKind().GroupVersionKind().Kind
+	if storeKind == esv1beta1.ClusterSecretStoreKind {
+		caller = esmetav1.ReferentCallClusterSecretStore
+	}
+	referredSpec, err := storeProvider.ApplyReferent(spec, caller, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("could not apply referrent logic to spec on %v: %w", store.GetName(), err)
+	}
+	secretClient, err = storeProvider.NewClientFromObj(ctx, referredSpec, m.client, namespace)
 	if err != nil {
 		return nil, err
 	}

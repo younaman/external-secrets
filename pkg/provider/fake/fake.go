@@ -70,6 +70,8 @@ func (p *Provider) ApplyReferent(spec client.Object, caller esmeta.ReferentCallO
 	}
 	switch caller {
 	case esmeta.ReferentCallSecretStore:
+		// Logic to update 'namespace' fields from provider original spec.
+		fmt.Printf("i would do something here if I was a legit implementation updating all ns references to %v\n", ns)
 	case esmeta.ReferentCallProvider:
 		// Logic to update 'namespace' fields from provider original spec.
 		fmt.Printf("i would do something here if I was a legit implementation updating all ns references to %v\n", ns)
