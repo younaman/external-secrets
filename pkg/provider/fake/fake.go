@@ -59,6 +59,10 @@ type Provider struct {
 func (p *Provider) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite
 }
+func (p *Provider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
+	return nil, nil
+}
+
 func (p *Provider) NewClientFromObj(_ context.Context, obj client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	if p.database == nil {
 		p.database = make(map[string]Config)
@@ -266,5 +270,4 @@ func init() {
 	})
 	esv1beta1.RegisterByName(&Provider{}, prov.FakeKind)
 	prov.RefRegister(&prov.Fake{}, prov.FakeKind)
-
 }

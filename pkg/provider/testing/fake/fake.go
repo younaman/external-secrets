@@ -167,6 +167,10 @@ func (v *Client) NewClient(ctx context.Context, store esv1beta1.GenericStore, ku
 	return c, nil
 }
 
+func (v *Client) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
+	return nil, nil
+}
+
 func (v *Client) NewClientFromObj(_ context.Context, _ client.Object, _ client.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, nil
 }

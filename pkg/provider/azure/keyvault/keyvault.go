@@ -123,6 +123,10 @@ func init() {
 	})
 }
 
+func (a *Azure) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
+	return nil, nil
+}
+
 // Capabilities return the provider supported capabilities (ReadOnly, WriteOnly, ReadWrite).
 func (a *Azure) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadWrite

@@ -637,6 +637,11 @@ func (ibm *providerIBM) ValidateStore(store esv1beta1.GenericStore) error {
 func (ibm *providerIBM) Capabilities() esv1beta1.SecretStoreCapabilities {
 	return esv1beta1.SecretStoreReadOnly
 }
+
+func (ibm *providerIBM) Convert(_ esv1beta1.GenericStore) (kclient.Object, error) {
+	return nil, nil
+}
+
 func (ibm *providerIBM) NewClientFromObj(_ context.Context, _ kclient.Object, _ kclient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }

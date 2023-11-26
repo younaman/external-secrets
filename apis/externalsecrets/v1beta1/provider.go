@@ -51,7 +51,7 @@ type Provider interface {
 	NewClientFromObj(ctx context.Context, obj client.Object, kube client.Client, namespace string) (SecretsClient, error)
 	// NewClient constructs a SecretsManager Provider
 	NewClient(ctx context.Context, store GenericStore, kube client.Client, namespace string) (SecretsClient, error)
-
+	Convert(store GenericStore) (client.Object, error)
 	// ValidateStore checks if the provided store is valid
 	ValidateStore(store GenericStore) error
 	// Capabilities returns the provider Capabilities (Read, Write, ReadWrite)

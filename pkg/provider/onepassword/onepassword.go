@@ -76,6 +76,10 @@ func (provider *ProviderOnePassword) NewClientFromObj(_ context.Context, _ kclie
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (provider *ProviderOnePassword) Convert(_ esv1beta1.GenericStore) (kclient.Object, error) {
+	return nil, nil
+}
+
 // NewClient constructs a 1Password Provider.
 func (provider *ProviderOnePassword) NewClient(ctx context.Context, store esv1beta1.GenericStore, kube kclient.Client, namespace string) (esv1beta1.SecretsClient, error) {
 	config := store.GetSpec().Provider.OnePassword

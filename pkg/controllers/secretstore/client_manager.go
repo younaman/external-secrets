@@ -93,10 +93,23 @@ func (m *Manager) getProviderSpec(ctx context.Context, ref *esmetav1.ProviderRef
 func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore, namespace string) (esv1beta1.SecretsClient, error) {
 	var storeProvider esv1beta1.Provider
 	var err error
-	if store.GetSpec().ProviderRef != nil {
-		storeProvider, _ = esv1beta1.GetProviderByRef(*store.GetSpec().ProviderRef)
+	var spec client.Object
+	prov := store.GetSpec().ProviderRef
+	if prov != nil {
+		storeProvider, _ = esv1beta1.GetProviderByRef(*prov)
+		spec, err = m.getProviderSpec(ctx, store.GetSpec().ProviderRef, namespace)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		storeProvider, err = esv1beta1.GetProvider(store)
+		if err != nil {
+			return nil, err
+		}
+		spec, err = storeProvider.Convert(store)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err != nil {
 		return nil, err
@@ -108,23 +121,22 @@ func (m *Manager) GetFromStore(ctx context.Context, store esv1beta1.GenericStore
 	m.log.V(1).Info("creating new client",
 		"provider", fmt.Sprintf("%T", storeProvider),
 		"store", fmt.Sprintf("%s/%s", store.GetNamespace(), store.GetName()))
-	// secret client is created only if we are going to refresh
-	// this skip an unnecessary check/request in the case we are not going to do anything
-	if store.GetSpec().ProviderRef != nil {
-		spec, err := m.getProviderSpec(ctx, store.GetSpec().ProviderRef, namespace)
-		if err != nil {
-			return nil, err
-		}
-		// TODO FIX THIS CODE
-		secretClient, err = storeProvider.NewClientFromObj(ctx, spec, m.client, namespace)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	// Compatibility - not break the code while methods are not implemented
+	if spec == nil {
 		secretClient, err = storeProvider.NewClient(ctx, store, m.client, namespace)
 		if err != nil {
 			return nil, err
 		}
+		idx := storeKey(storeProvider)
+		m.clientMap[idx] = &clientVal{
+			client: secretClient,
+			store:  store,
+		}
+		return secretClient, nil
+	}
+	secretClient, err = storeProvider.NewClientFromObj(ctx, spec, m.client, namespace)
+	if err != nil {
+		return nil, err
 	}
 	idx := storeKey(storeProvider)
 	m.clientMap[idx] = &clientVal{

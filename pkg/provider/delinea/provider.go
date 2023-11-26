@@ -203,6 +203,9 @@ func (p *Provider) ValidateStore(store esv1beta1.GenericStore) error {
 func (p *Provider) NewClientFromObj(_ context.Context, _ kubeClient.Object, _ kubeClient.Client, _ string) (esv1beta1.SecretsClient, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+func (p *Provider) Convert(_ esv1beta1.GenericStore) (kubeClient.Object, error) {
+	return nil, nil
+}
 
 func init() {
 	esv1beta1.Register(&Provider{}, &esv1beta1.SecretStoreProvider{

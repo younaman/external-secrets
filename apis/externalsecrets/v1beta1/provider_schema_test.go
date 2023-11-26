@@ -27,6 +27,9 @@ type PP struct{}
 
 const shouldBeRegistered = "provider should be registered"
 
+func (p *PP) Convert(_ GenericStore) (client.Object, error) {
+	return nil, nil
+}
 func (p *PP) Capabilities() SecretStoreCapabilities {
 	return SecretStoreReadOnly
 }

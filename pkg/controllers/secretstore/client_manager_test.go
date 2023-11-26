@@ -322,6 +322,10 @@ func (f *WrapProvider) NewClientFromObj(_ context.Context, _ client.Object, _ cl
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (f *WrapProvider) Convert(_ esv1beta1.GenericStore) (client.Object, error) {
+	return nil, nil
+}
+
 // NewClient constructs a SecretsManager Provider.
 func (f *WrapProvider) NewClient(
 	ctx context.Context,
