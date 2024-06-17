@@ -120,13 +120,13 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 		return fmt.Errorf("unable to parse metadata parameters: %w", err)
 	}
 	err = c.createOrUpdate(ctx, remoteSecret, func() error {
-		c.mergeMetadata(remoteSecret, localSecret, pushMeta)
-		return c.mergeData(remoteRef, remoteSecret, localSecret)
+		c.mergePushSecretMetadata(remoteSecret, localSecret, pushMeta)
+		return c.mergePushSecretData(remoteRef, remoteSecret, localSecret)
 	})
 	return err
 }
 
-func (c *Client) mergeData(remoteRef esv1beta1.PushSecretData, remoteSecret, localSecret *v1.Secret) error {
+func (c *Client) mergePushSecretData(remoteRef esv1beta1.PushSecretData, remoteSecret, localSecret *v1.Secret) error {
 	// apply secret type
 	secretType := v1.SecretTypeOpaque
 	if localSecret.Type != "" {
@@ -162,7 +162,7 @@ func (c *Client) mergeData(remoteRef esv1beta1.PushSecretData, remoteSecret, loc
 	return nil
 }
 
-func (c *Client) mergeMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *PushSecretMetadata) {
+func (c *Client) mergePushSecretMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *PushSecretMetadata) {
 	// merge metadata with existing metadata
 	// The metadata in the remoteRef takes precedence, see below.
 	if remoteSecret.ObjectMeta.Labels == nil {
