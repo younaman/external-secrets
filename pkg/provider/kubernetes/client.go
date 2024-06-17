@@ -109,58 +109,57 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 	if remoteRef.GetProperty() == "" && remoteRef.GetSecretKey() != "" {
 		return fmt.Errorf("requires property in RemoteRef to push secret value if secret key is defined")
 	}
-
 	remoteSecret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.store.RemoteNamespace,
 			Name:      remoteRef.GetRemoteKey(),
 		},
 	}
-
 	pushMeta, err := parseMetadataParameters(remoteRef.GetMetadata())
 	if err != nil {
 		return fmt.Errorf("unable to parse metadata parameters: %w", err)
 	}
-
 	err = c.createOrUpdate(ctx, remoteSecret, func() error {
 		c.mergeMetadata(remoteSecret, localSecret, pushMeta)
-
-		// apply secret type
-		secretType := v1.SecretTypeOpaque
-		if localSecret.Type != "" {
-			secretType = localSecret.Type
-		}
-		remoteSecret.Type = secretType
-
-		// merge secret data with existing secret data
-		if remoteSecret.Data == nil {
-			remoteSecret.Data = make(map[string][]byte)
-		}
-
-		// if property is defined, we will only push to that property
-		// if it is not defined (below), we will push the whole secret
-		if remoteRef.GetProperty() != "" {
-			// if secret key is empty, we will marshal the whole secret and put it into
-			// the property defined in the remoteRef.
-			if remoteRef.GetSecretKey() == "" {
-				value, err := c.marshalData(localSecret)
-				if err != nil {
-					return err
-				}
-				remoteSecret.Data[remoteRef.GetProperty()] = value
-			} else {
-				// if secret key is defined, we will push that key from the local secret
-				remoteSecret.Data[remoteRef.GetProperty()] = localSecret.Data[remoteRef.GetSecretKey()]
-			}
-		} else {
-			for k, v := range localSecret.Data {
-				remoteSecret.Data[k] = v
-			}
-		}
-		return nil
+		return c.mergeData(remoteRef, remoteSecret, localSecret)
 	})
-	metrics.ObserveAPICall(constants.ProviderKubernetes, constants.CallKubernetesGetSecret, err)
 	return err
+}
+
+func (c *Client) mergeData(remoteRef esv1beta1.PushSecretData, remoteSecret, localSecret *v1.Secret) error {
+	// apply secret type
+	secretType := v1.SecretTypeOpaque
+	if localSecret.Type != "" {
+		secretType = localSecret.Type
+	}
+	remoteSecret.Type = secretType
+
+	// merge secret data with existing secret data
+	if remoteSecret.Data == nil {
+		remoteSecret.Data = make(map[string][]byte)
+	}
+
+	// if property is defined, we will only push to that property
+	// if it is not defined (below), we will push the whole secret
+	if remoteRef.GetProperty() != "" {
+		// if secret key is empty, we will marshal the whole secret and put it into
+		// the property defined in the remoteRef.
+		if remoteRef.GetSecretKey() == "" {
+			value, err := c.marshalData(localSecret)
+			if err != nil {
+				return err
+			}
+			remoteSecret.Data[remoteRef.GetProperty()] = value
+		} else {
+			// if secret key is defined, we will push that key from the local secret
+			remoteSecret.Data[remoteRef.GetProperty()] = localSecret.Data[remoteRef.GetSecretKey()]
+		}
+	} else {
+		for k, v := range localSecret.Data {
+			remoteSecret.Data[k] = v
+		}
+	}
+	return nil
 }
 
 func (c *Client) mergeMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *PushSecretMetadata) {
@@ -188,6 +187,7 @@ func (c *Client) mergeMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *P
 
 func (c *Client) createOrUpdate(ctx context.Context, targetSecret *v1.Secret, f func() error) error {
 	target, err := c.userSecretClient.Get(ctx, targetSecret.Name, metav1.GetOptions{})
+	metrics.ObserveAPICall(constants.ProviderKubernetes, constants.CallKubernetesGetSecret, err)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return err
