@@ -123,26 +123,7 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 	}
 
 	err = c.createOrUpdate(ctx, remoteSecret, func() error {
-		// merge metadata with existing metadata
-		// The metadata in the remoteRef takes precedence, see below.
-		if remoteSecret.ObjectMeta.Labels == nil {
-			remoteSecret.ObjectMeta.Labels = make(map[string]string)
-		}
-		if remoteSecret.ObjectMeta.Annotations == nil {
-			remoteSecret.ObjectMeta.Annotations = make(map[string]string)
-		}
-		utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, localSecret.ObjectMeta.Labels)
-		utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, localSecret.ObjectMeta.Annotations)
-
-		// merge metadata from remoteRef
-		if pushMeta != nil {
-			if pushMeta.Spec.Labels != nil {
-				utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, pushMeta.Spec.Labels)
-			}
-			if pushMeta.Spec.Annotations != nil {
-				utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, pushMeta.Spec.Annotations)
-			}
-		}
+		c.mergeMetadata(remoteSecret, localSecret, pushMeta)
 
 		// apply secret type
 		secretType := v1.SecretTypeOpaque
@@ -180,6 +161,29 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 	})
 	metrics.ObserveAPICall(constants.ProviderKubernetes, constants.CallKubernetesGetSecret, err)
 	return err
+}
+
+func (c *Client) mergeMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *PushSecretMetadata) {
+	// merge metadata with existing metadata
+	// The metadata in the remoteRef takes precedence, see below.
+	if remoteSecret.ObjectMeta.Labels == nil {
+		remoteSecret.ObjectMeta.Labels = make(map[string]string)
+	}
+	if remoteSecret.ObjectMeta.Annotations == nil {
+		remoteSecret.ObjectMeta.Annotations = make(map[string]string)
+	}
+	utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, localSecret.ObjectMeta.Labels)
+	utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, localSecret.ObjectMeta.Annotations)
+
+	// merge metadata from remoteRef
+	if pushMeta != nil {
+		if pushMeta.Spec.Labels != nil {
+			utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, pushMeta.Spec.Labels)
+		}
+		if pushMeta.Spec.Annotations != nil {
+			utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, pushMeta.Spec.Annotations)
+		}
+	}
 }
 
 func (c *Client) createOrUpdate(ctx context.Context, targetSecret *v1.Secret, f func() error) error {
