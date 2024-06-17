@@ -115,15 +115,33 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 		},
 	}
 	err := c.createOrUpdate(ctx, remoteSecret, func() error {
-		if remoteSecret.Data == nil {
-			remoteSecret.Data = make(map[string][]byte)
+		// merge metadata with existing metadata
+		if remoteSecret.ObjectMeta.Labels == nil {
+			remoteSecret.ObjectMeta.Labels = make(map[string]string)
 		}
+		if remoteSecret.ObjectMeta.Annotations == nil {
+			remoteSecret.ObjectMeta.Annotations = make(map[string]string)
+		}
+		utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, localSecret.ObjectMeta.Labels)
+		utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, localSecret.ObjectMeta.Annotations)
+
+		// apply secret type
 		secretType := v1.SecretTypeOpaque
 		if localSecret.Type != "" {
 			secretType = localSecret.Type
 		}
 		remoteSecret.Type = secretType
+
+		// merge secret data with existing secret data
+		if remoteSecret.Data == nil {
+			remoteSecret.Data = make(map[string][]byte)
+		}
+
+		// if property is defined, we will only push to that property
+		// if it is not defined (below), we will push the whole secret
 		if remoteRef.GetProperty() != "" {
+			// if secret key is empty, we will marshal the whole secret and put it into
+			// the property defined in the remoteRef.
 			if remoteRef.GetSecretKey() == "" {
 				value, err := c.marshalData(localSecret)
 				if err != nil {
@@ -131,7 +149,7 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 				}
 				remoteSecret.Data[remoteRef.GetProperty()] = value
 			} else {
-				// push a specific secret key into a specific remote property
+				// if secret key is defined, we will push that key from the local secret
 				remoteSecret.Data[remoteRef.GetProperty()] = localSecret.Data[remoteRef.GetSecretKey()]
 			}
 		} else {
