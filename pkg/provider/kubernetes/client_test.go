@@ -991,6 +991,45 @@ func TestPushSecret(t *testing.T) {
 			},
 		},
 		{
+			name: "create new secret with whole secret",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"yoursec": {
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				Data: map[string][]byte{
+					"foo": []byte("bar"),
+					"baz": []byte("bang"),
+				},
+			},
+			data: testingfake.PushSecretData{
+				RemoteKey: "mysec",
+			},
+			wantErr: false,
+			wantSecretMap: map[string]*v1.Secret{
+				"yoursec": {
+					Data: map[string][]byte{
+						"token": []byte(`foo`),
+					},
+				},
+				"mysec": {
+					Data: map[string][]byte{
+						"foo": []byte("bar"),
+						"baz": []byte("bang"),
+					},
+					Type: v1.SecretTypeOpaque,
+				},
+			},
+		},
+		{
 			name: "create new dockerconfigjson secret",
 			fields: fields{
 				Client: &fakeClient{
