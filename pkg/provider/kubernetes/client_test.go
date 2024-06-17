@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -1031,6 +1032,129 @@ func TestPushSecret(t *testing.T) {
 						"secret": []byte(`bar`),
 					},
 					Type: v1.SecretTypeOpaque,
+				},
+			},
+		},
+		{
+			name: "create new secret with metadata from secret metadata and remoteRef.metadata",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"yoursec": {
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{"date": "today"},
+					Labels:      map[string]string{"dev": "seb"},
+				},
+				Data: map[string][]byte{secretKey: []byte("bar")},
+			},
+			data: testingfake.PushSecretData{
+				SecretKey: secretKey,
+				RemoteKey: "mysec",
+				Property:  "secret",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: {"annotations": {"another-field": "from-remote-ref"}, "labels": {"other-label": "from-remote-ref"}}}`),
+				},
+			},
+			wantErr: false,
+			wantSecretMap: map[string]*v1.Secret{
+				"yoursec": {
+					Data: map[string][]byte{
+						"token": []byte(`foo`),
+					},
+				},
+				"mysec": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "mysec",
+						Annotations: map[string]string{
+							"date":          "today",
+							"another-field": "from-remote-ref",
+						},
+						Labels: map[string]string{
+							"dev":         "seb",
+							"other-label": "from-remote-ref",
+						},
+					},
+					Data: map[string][]byte{
+						"secret": []byte(`bar`),
+					},
+					Type: v1.SecretTypeOpaque,
+				},
+			},
+		},
+		{
+			name: "invalid secret metadata structure results in error",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"yoursec": {
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				Data: map[string][]byte{secretKey: []byte("bar")},
+			},
+			data: testingfake.PushSecretData{
+				SecretKey: secretKey,
+				RemoteKey: "mysec",
+				Property:  "secret",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`{}`),
+				},
+			},
+			wantErr: true,
+			wantSecretMap: map[string]*v1.Secret{
+				"yoursec": {
+					Data: map[string][]byte{
+						"token": []byte(`foo`),
+					},
+				},
+			},
+		},
+		{
+			name: "non-json secret metadata results in error",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"yoursec": {
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				Data: map[string][]byte{secretKey: []byte("bar")},
+			},
+			data: testingfake.PushSecretData{
+				SecretKey: secretKey,
+				RemoteKey: "mysec",
+				Property:  "secret",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`--- not json ---`),
+				},
+			},
+			wantErr: true,
+			wantSecretMap: map[string]*v1.Secret{
+				"yoursec": {
+					Data: map[string][]byte{
+						"token": []byte(`foo`),
+					},
 				},
 			},
 		},

@@ -23,10 +23,12 @@ import (
 
 	"github.com/tidwall/gjson"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"sigs.k8s.io/yaml"
 
 	esv1beta1 "github.com/external-secrets/external-secrets/apis/externalsecrets/v1beta1"
 	"github.com/external-secrets/external-secrets/pkg/constants"
@@ -114,8 +116,15 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 			Name:      remoteRef.GetRemoteKey(),
 		},
 	}
-	err := c.createOrUpdate(ctx, remoteSecret, func() error {
+
+	pushMeta, err := parseMetadataParameters(remoteRef.GetMetadata())
+	if err != nil {
+		return fmt.Errorf("unable to parse metadata parameters: %w", err)
+	}
+
+	err = c.createOrUpdate(ctx, remoteSecret, func() error {
 		// merge metadata with existing metadata
+		// The metadata in the remoteRef takes precedence, see below.
 		if remoteSecret.ObjectMeta.Labels == nil {
 			remoteSecret.ObjectMeta.Labels = make(map[string]string)
 		}
@@ -124,6 +133,16 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 		}
 		utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, localSecret.ObjectMeta.Labels)
 		utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, localSecret.ObjectMeta.Annotations)
+
+		// merge metadata from remoteRef
+		if pushMeta != nil {
+			if pushMeta.Spec.Labels != nil {
+				utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, pushMeta.Spec.Labels)
+			}
+			if pushMeta.Spec.Annotations != nil {
+				utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, pushMeta.Spec.Annotations)
+			}
+		}
 
 		// apply secret type
 		secretType := v1.SecretTypeOpaque
@@ -482,4 +501,39 @@ func getFromSecretMetadata(secret *v1.Secret, ref esv1beta1.ExternalSecretDataRe
 	}
 
 	return []byte(val.String()), true, nil
+}
+
+const (
+	metadataAPIVersion = "kubernetes.external-secrets.io/v1alpha1"
+	metadataKind       = "PushSecretMetadata"
+)
+
+type PushSecretMetadata struct {
+	metav1.TypeMeta
+	Spec PushSecretMetadataSpec `json:"spec,omitempty"`
+}
+type PushSecretMetadataSpec struct {
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+}
+
+func parseMetadataParameters(data *apiextensionsv1.JSON) (*PushSecretMetadata, error) {
+	if data == nil {
+		return nil, nil
+	}
+	var metadata PushSecretMetadata
+	err := yaml.Unmarshal(data.Raw, &metadata, yaml.DisallowUnknownFields)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse %s %s: %w", metadataAPIVersion, metadataKind, err)
+	}
+
+	if metadata.APIVersion != metadataAPIVersion {
+		return nil, fmt.Errorf("unexpected apiVersion %q, expected %q", metadata.APIVersion, metadataAPIVersion)
+	}
+
+	if metadata.Kind != metadataKind {
+		return nil, fmt.Errorf("unexpected kind %q, expected %q", metadata.Kind, metadataKind)
+	}
+
+	return &metadata, nil
 }
