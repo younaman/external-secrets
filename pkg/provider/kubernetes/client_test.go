@@ -804,9 +804,7 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -839,9 +837,7 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"token": []byte(`{"foo":"bar"}`),
@@ -873,9 +869,7 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -905,9 +899,7 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"marshaled": []byte(`{"token":"foo","token2":"2"}`),
@@ -942,9 +934,7 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -979,6 +969,49 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
+						Name: "mysec",
+					},
+					Data: map[string][]byte{
+						"token": []byte(`bar`),
+					},
+				},
+			},
+		},
+		{
+			name: "replace existing property in existing secret with targetMergePolicy set to Ignore",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"mysec": {
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "mysec",
+					// these should be ignored as the targetMergePolicy is set to Ignore
+					Labels:      map[string]string{"dev": "seb"},
+					Annotations: map[string]string{"date": "today"},
+				},
+				Data: map[string][]byte{secretKey: []byte("bar")},
+			},
+			data: testingfake.PushSecretData{
+				SecretKey: secretKey,
+				RemoteKey: "mysec",
+				Property:  "token",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: {"targetMergePolicy": "Ignore"}}`),
+				},
+			},
+			wantErr: false,
+			wantSecretMap: map[string]*v1.Secret{
+				"mysec": {
+					ObjectMeta: metav1.ObjectMeta{
 						Name:        "mysec",
 						Labels:      map[string]string{},
 						Annotations: map[string]string{},
@@ -990,7 +1023,65 @@ func TestPushSecret(t *testing.T) {
 			},
 		},
 		{
-			name: "create new secret with existing metadata",
+			name: "replace existing property in existing secret with targetMergePolicy set to Replace",
+			fields: fields{
+				Client: &fakeClient{
+					t: t,
+					secretMap: map[string]*v1.Secret{
+						"mysec": {
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "mysec",
+								Labels: map[string]string{
+									"already": "existing",
+								},
+								Annotations: map[string]string{
+									"already": "existing",
+								},
+							},
+							Data: map[string][]byte{
+								"token": []byte(`foo`),
+							},
+						},
+					},
+				},
+			},
+			secret: &v1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "mysec",
+					// these should replace existing metadata as the targetMergePolicy is set to Replace
+					Labels:      map[string]string{"dev": "seb"},
+					Annotations: map[string]string{"date": "today"},
+				},
+				Data: map[string][]byte{secretKey: []byte("bar")},
+			},
+			data: testingfake.PushSecretData{
+				SecretKey: secretKey,
+				RemoteKey: "mysec",
+				Property:  "token",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: {"targetMergePolicy": "Replace"}}`),
+				},
+			},
+			wantErr: false,
+			wantSecretMap: map[string]*v1.Secret{
+				"mysec": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "mysec",
+						Labels: map[string]string{
+							"dev": "seb",
+						},
+						Annotations: map[string]string{
+							"date": "today",
+						},
+					},
+					Data: map[string][]byte{
+						"token": []byte(`bar`),
+					},
+				},
+			},
+		},
+		{
+			name: "create new secret, merging existing metadata",
 			fields: fields{
 				Client: &fakeClient{
 					t: t,
@@ -1005,8 +1096,9 @@ func TestPushSecret(t *testing.T) {
 			},
 			secret: &v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{"date": "today"},
-					Labels:      map[string]string{"dev": "seb"},
+					Annotations: map[string]string{
+						"this-annotation": "should be present on the targey secret",
+					},
 				},
 				Data: map[string][]byte{secretKey: []byte("bar")},
 			},
@@ -1014,6 +1106,9 @@ func TestPushSecret(t *testing.T) {
 				SecretKey: secretKey,
 				RemoteKey: "mysec",
 				Property:  "secret",
+				Metadata: &apiextensionsv1.JSON{
+					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: {"annotations": {"date": "today"}, "labels": {"dev": "seb"}}}`),
+				},
 			},
 			wantErr: false,
 			wantSecretMap: map[string]*v1.Secret{
@@ -1024,9 +1119,12 @@ func TestPushSecret(t *testing.T) {
 				},
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Annotations: map[string]string{"date": "today"},
-						Labels:      map[string]string{"dev": "seb"},
+						Name: "mysec",
+						Annotations: map[string]string{
+							"date":            "today",
+							"this-annotation": "should be present on the targey secret",
+						},
+						Labels: map[string]string{"dev": "seb"},
 					},
 					Data: map[string][]byte{
 						"secret": []byte(`bar`),
@@ -1061,7 +1159,7 @@ func TestPushSecret(t *testing.T) {
 				RemoteKey: "mysec",
 				Property:  "secret",
 				Metadata: &apiextensionsv1.JSON{
-					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: {"annotations": {"another-field": "from-remote-ref"}, "labels": {"other-label": "from-remote-ref"}}}`),
+					Raw: []byte(`{"apiVersion":"kubernetes.external-secrets.io/v1alpha1", "kind": "PushSecretMetadata", spec: { "sourceMergePolicy": "Replace", "annotations": {"another-field": "from-remote-ref"}, "labels": {"other-label": "from-remote-ref"}}}`),
 				},
 			},
 			wantErr: false,
@@ -1075,11 +1173,9 @@ func TestPushSecret(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "mysec",
 						Annotations: map[string]string{
-							"date":          "today",
 							"another-field": "from-remote-ref",
 						},
 						Labels: map[string]string{
-							"dev":         "seb",
 							"other-label": "from-remote-ref",
 						},
 					},
@@ -1190,9 +1286,7 @@ func TestPushSecret(t *testing.T) {
 				},
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"foo": []byte("bar"),
@@ -1234,9 +1328,7 @@ func TestPushSecret(t *testing.T) {
 				},
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "mysec",
-						Labels:      map[string]string{},
-						Annotations: map[string]string{},
+						Name: "mysec",
 					},
 					Data: map[string][]byte{
 						"config.json": []byte(`{"auths": {"myregistry.localhost": {"username": "{{ .username }}", "password": "{{ .password }}"}}}`),
@@ -1244,7 +1336,8 @@ func TestPushSecret(t *testing.T) {
 					Type: v1.SecretTypeDockerConfigJson,
 				},
 			},
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &Client{

@@ -115,15 +115,10 @@ func (c *Client) PushSecret(ctx context.Context, localSecret *v1.Secret, remoteR
 			Name:      remoteRef.GetRemoteKey(),
 		},
 	}
-	pushMeta, err := parseMetadataParameters(remoteRef.GetMetadata())
-	if err != nil {
-		return fmt.Errorf("unable to parse metadata parameters: %w", err)
-	}
-	err = c.createOrUpdate(ctx, remoteSecret, func() error {
-		c.mergePushSecretMetadata(remoteSecret, localSecret, pushMeta)
+
+	return c.createOrUpdate(ctx, remoteSecret, func() error {
 		return c.mergePushSecretData(remoteRef, remoteSecret, localSecret)
 	})
-	return err
 }
 
 func (c *Client) mergePushSecretData(remoteRef esv1beta1.PushSecretData, remoteSecret, localSecret *v1.Secret) error {
@@ -139,50 +134,46 @@ func (c *Client) mergePushSecretData(remoteRef esv1beta1.PushSecretData, remoteS
 		remoteSecret.Data = make(map[string][]byte)
 	}
 
-	// if property is defined, we will only push to that property
-	// if it is not defined (below), we will push the whole secret
-	if remoteRef.GetProperty() != "" {
-		// if secret key is empty, we will marshal the whole secret and put it into
-		// the property defined in the remoteRef.
-		if remoteRef.GetSecretKey() == "" {
-			value, err := c.marshalData(localSecret)
-			if err != nil {
-				return err
-			}
-			remoteSecret.Data[remoteRef.GetProperty()] = value
-		} else {
-			// if secret key is defined, we will push that key from the local secret
-			remoteSecret.Data[remoteRef.GetProperty()] = localSecret.Data[remoteRef.GetSecretKey()]
-		}
-	} else {
+	pushMeta, err := parseMetadataParameters(remoteRef.GetMetadata())
+	if err != nil {
+		return fmt.Errorf("unable to parse metadata parameters: %w", err)
+	}
+
+	// merge metadata based on the policy
+	var targetLabels, targetAnnotations map[string]string
+	sourceLabels, sourceAnnotations, err := mergeSourceMetadata(localSecret, pushMeta)
+	if err != nil {
+		return fmt.Errorf("failed to merge source metadata: %w", err)
+	}
+	targetLabels, targetAnnotations, err = mergeTargetMetadata(remoteSecret, pushMeta, sourceLabels, sourceAnnotations)
+	if err != nil {
+		return fmt.Errorf("failed to merge target metadata: %w", err)
+	}
+	remoteSecret.ObjectMeta.Labels = targetLabels
+	remoteSecret.ObjectMeta.Annotations = targetAnnotations
+
+	// case 1: push the whole secret
+	if remoteRef.GetProperty() == "" {
 		for k, v := range localSecret.Data {
 			remoteSecret.Data[k] = v
 		}
+		return nil
+	}
+
+	// cases 2a + 2b: push into a property.
+	// if secret key is empty, we will marshal the whole secret and put it into
+	// the property defined in the remoteRef.
+	if remoteRef.GetSecretKey() == "" {
+		value, err := c.marshalData(localSecret)
+		if err != nil {
+			return err
+		}
+		remoteSecret.Data[remoteRef.GetProperty()] = value
+	} else {
+		// if secret key is defined, we will push that key from the local secret
+		remoteSecret.Data[remoteRef.GetProperty()] = localSecret.Data[remoteRef.GetSecretKey()]
 	}
 	return nil
-}
-
-func (c *Client) mergePushSecretMetadata(remoteSecret, localSecret *v1.Secret, pushMeta *PushSecretMetadata) {
-	// merge metadata with existing metadata
-	// The metadata in the remoteRef takes precedence, see below.
-	if remoteSecret.ObjectMeta.Labels == nil {
-		remoteSecret.ObjectMeta.Labels = make(map[string]string)
-	}
-	if remoteSecret.ObjectMeta.Annotations == nil {
-		remoteSecret.ObjectMeta.Annotations = make(map[string]string)
-	}
-	utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, localSecret.ObjectMeta.Labels)
-	utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, localSecret.ObjectMeta.Annotations)
-
-	// merge metadata from remoteRef
-	if pushMeta != nil {
-		if pushMeta.Spec.Labels != nil {
-			utils.MergeStringMap(remoteSecret.ObjectMeta.Labels, pushMeta.Spec.Labels)
-		}
-		if pushMeta.Spec.Annotations != nil {
-			utils.MergeStringMap(remoteSecret.ObjectMeta.Annotations, pushMeta.Spec.Annotations)
-		}
-	}
 }
 
 func (c *Client) createOrUpdate(ctx context.Context, targetSecret *v1.Secret, f func() error) error {
@@ -517,9 +508,27 @@ type PushSecretMetadata struct {
 	Spec PushSecretMetadataSpec `json:"spec,omitempty"`
 }
 type PushSecretMetadataSpec struct {
+	TargetMergePolicy targetMergePolicy `json:"targetMergePolicy,omitempty"`
+	SourceMergePolicy sourceMergePolicy `json:"sourceMergePolicy,omitempty"`
+
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
+
+type targetMergePolicy string
+
+const (
+	targetMergePolicyMerge   targetMergePolicy = "Merge"
+	targetMergePolicyReplace targetMergePolicy = "Replace"
+	targetMergePolicyIgnore  targetMergePolicy = "Ignore"
+)
+
+type sourceMergePolicy string
+
+const (
+	sourceMergePolicyMerge   sourceMergePolicy = "Merge"
+	sourceMergePolicyReplace sourceMergePolicy = "Replace"
+)
 
 func parseMetadataParameters(data *apiextensionsv1.JSON) (*PushSecretMetadata, error) {
 	if data == nil {
@@ -540,4 +549,80 @@ func parseMetadataParameters(data *apiextensionsv1.JSON) (*PushSecretMetadata, e
 	}
 
 	return &metadata, nil
+}
+
+// Takes the local secret metadata and merges it with the push metadata.
+// The push metadata takes precedence.
+// Depending on the policy, we either merge or overwrite the metadata from the local secret.
+func mergeSourceMetadata(localSecret *v1.Secret, pushMeta *PushSecretMetadata) (map[string]string, map[string]string, error) {
+	labels := localSecret.ObjectMeta.Labels
+	annotations := localSecret.ObjectMeta.Annotations
+	if pushMeta == nil {
+		return labels, annotations, nil
+	}
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	switch pushMeta.Spec.SourceMergePolicy {
+	case "":
+		// default to merge
+		fallthrough
+	case sourceMergePolicyMerge:
+		for k, v := range pushMeta.Spec.Labels {
+			labels[k] = v
+		}
+		for k, v := range pushMeta.Spec.Annotations {
+			annotations[k] = v
+		}
+	case sourceMergePolicyReplace:
+		labels = pushMeta.Spec.Labels
+		annotations = pushMeta.Spec.Annotations
+	default:
+		return nil, nil, fmt.Errorf("unexpected source merge policy %q", pushMeta.Spec.SourceMergePolicy)
+	}
+	return labels, annotations, nil
+}
+
+// Takes the remote secret metadata and merges it with the source metadata.
+// The source metadata may replace the existing labels/annotations
+// or merge into it depending on policy.
+func mergeTargetMetadata(remoteSecret *v1.Secret, pushMeta *PushSecretMetadata, sourceLabels, sourceAnnotations map[string]string) (map[string]string, map[string]string, error) {
+	labels := remoteSecret.ObjectMeta.Labels
+	annotations := remoteSecret.ObjectMeta.Annotations
+	if pushMeta == nil {
+		return labels, annotations, nil
+	}
+
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+
+	switch pushMeta.Spec.TargetMergePolicy {
+	case "":
+		fallthrough
+	case targetMergePolicyMerge:
+		for k, v := range sourceLabels {
+			labels[k] = v
+		}
+		for k, v := range sourceAnnotations {
+			annotations[k] = v
+		}
+	case targetMergePolicyReplace:
+		labels = sourceLabels
+		annotations = sourceAnnotations
+	case targetMergePolicyIgnore:
+		// leave the target metadata as is
+		// this is useful when we only want to push data
+		// and the user does not want to touch the metadata
+	default:
+		return nil, nil, fmt.Errorf("unexpected target merge policy %q", pushMeta.Spec.TargetMergePolicy)
+	}
+	return labels, annotations, nil
 }
