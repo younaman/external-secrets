@@ -115,18 +115,18 @@ func mergeSourceMetadata(localSecret *v1.Secret, pushMeta *PushSecretMetadata) (
 func mergeTargetMetadata(remoteSecret *v1.Secret, pushMeta *PushSecretMetadata, sourceLabels, sourceAnnotations map[string]string) (map[string]string, map[string]string, error) {
 	labels := remoteSecret.ObjectMeta.Labels
 	annotations := remoteSecret.ObjectMeta.Annotations
-	if pushMeta == nil {
-		return labels, annotations, nil
-	}
-
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
+	var targetMergePolicy targetMergePolicy
+	if pushMeta != nil {
+		targetMergePolicy = pushMeta.Spec.TargetMergePolicy
+	}
 
-	switch pushMeta.Spec.TargetMergePolicy {
+	switch targetMergePolicy {
 	case "", targetMergePolicyMerge:
 		for k, v := range sourceLabels {
 			labels[k] = v
@@ -142,7 +142,7 @@ func mergeTargetMetadata(remoteSecret *v1.Secret, pushMeta *PushSecretMetadata, 
 		// this is useful when we only want to push data
 		// and the user does not want to touch the metadata
 	default:
-		return nil, nil, fmt.Errorf("unexpected target merge policy %q", pushMeta.Spec.TargetMergePolicy)
+		return nil, nil, fmt.Errorf("unexpected target merge policy %q", targetMergePolicy)
 	}
 	return labels, annotations, nil
 }

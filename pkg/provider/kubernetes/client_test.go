@@ -804,7 +804,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -837,7 +839,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"token": []byte(`{"foo":"bar"}`),
@@ -869,7 +873,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -899,7 +905,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"marshaled": []byte(`{"token":"foo","token2":"2"}`),
@@ -934,7 +942,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"token":  []byte(`foo`),
@@ -969,7 +979,9 @@ func TestPushSecret(t *testing.T) {
 			wantSecretMap: map[string]*v1.Secret{
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"token": []byte(`bar`),
@@ -1286,7 +1298,9 @@ func TestPushSecret(t *testing.T) {
 				},
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"foo": []byte("bar"),
@@ -1328,7 +1342,9 @@ func TestPushSecret(t *testing.T) {
 				},
 				"mysec": {
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "mysec",
+						Name:        "mysec",
+						Labels:      map[string]string{},
+						Annotations: map[string]string{},
 					},
 					Data: map[string][]byte{
 						"config.json": []byte(`{"auths": {"myregistry.localhost": {"username": "{{ .username }}", "password": "{{ .password }}"}}}`),
