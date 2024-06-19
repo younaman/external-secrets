@@ -329,7 +329,7 @@ spec:
 {% endraw %}
 ```
 
-Further, you can leverage the `remoteRef.metadata` section to fine-tine the behaviour of the metadata merge strategy. The metadata section is a versioned custom-resource _alike_ structure, the behaviour is detailed below.
+Further, you can leverage the `.data[].metadata` section to fine-tine the behaviour of the metadata merge strategy. The metadata section is a versioned custom-resource _alike_ structure, the behaviour is detailed below.
 
 ```yaml
 apiVersion: external-secrets.io/v1alpha1
@@ -345,23 +345,23 @@ spec:
         remoteKey: example-remote-secret
         property: url
         
-        metadata:
-          apiVersion: kubernetes.external-secrets.io/v1alpha1
-          kind: PushSecretMetadata
-          spec:
-            sourceMergePolicy: Merge # or Replace
-            targetMergePolicy: Merge # or Replace / Ignore
-            labels:
-              color: red
-            annotations:
-              yes: please
+    metadata:
+      apiVersion: kubernetes.external-secrets.io/v1alpha1
+      kind: PushSecretMetadata
+      spec:
+        sourceMergePolicy: Merge # or Replace
+        targetMergePolicy: Merge # or Replace / Ignore
+        labels:
+          color: red
+        annotations:
+          yes: please
 
 ```
 
 
 | Field             | Type                                 | Description                                                                                                                                                                                                                                                                                                                                       |
 | ----------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| sourceMergePolicy | string: `Merge`, `Replace`           | The sourceMergePolicy defines how the metadata of the source secret is merged. `Merge` will merge the metadata of the source secret with the  metadata defined in `remoteRef.metadata`. With `Replace`, the metadata in `remoteRef.metadata` replaces the source metadata.                                                                        |
+| sourceMergePolicy | string: `Merge`, `Replace`           | The sourceMergePolicy defines how the metadata of the source secret is merged. `Merge` will merge the metadata of the source secret with the  metadata defined in `.data[].metadata`. With `Replace`, the metadata in `.data[].metadata` replaces the source metadata.                                                                            |
 | targetMergePolicy | string: `Merge`, `Replace`, `Ignore` | The targetMergePolicy defines how ESO merges the metadata produced by the sourceMergePolicy with the target secret. With `Merge`, the source metadata is merged with the existing metadata from the target secret. `Replace` will replace the target metadata with the metadata defined in the source. `Ignore` leaves the target metadata as is. |
 | labels            | `map[string]string`                  | The labels.                                                                                                                                                                                                                                                                                                                                       |
 | annotations       | `map[string]string`                  | The annotations.                                                                                                                                                                                                                                                                                                                                  |
